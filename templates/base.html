@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Grocery POS System{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">🛒 Grocery POS</div>
+        {% if session.user_id %}
+        <div class="user-info">
+            <span>Welcome, <strong>{{ session.username }}</strong> ({{ session.role }})</span>
+            {% if session.role == 'sales' %}
+                <a href="{{ url_for('sales_history') }}" style="margin-left: 1rem;">Sales History</a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}" style="margin-left: 1rem;">Logout</a>
+        </div>
+        {% endif %}
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-info">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

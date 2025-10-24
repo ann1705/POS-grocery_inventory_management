@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Receipt{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 2rem auto;">
+    <div style="margin-bottom: 1rem; display:flex; gap:0.5rem;">
+        <button type="button" onclick="history.back()" class="btn btn-secondary">← Back</button>
+        <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">New Sale</a>
+    </div>
+
+    <div class="card">
+        <div class="card-header" style="text-align: center; font-size: 1.5rem;">✅ Sale Completed</div>
+        <div class="card-body">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <p style="font-size: 2.5rem; color: var(--primary-color); margin: 0;">SUCCESS</p>
+            </div>
+
+            <table class="table" style="margin: 2rem 0;">
+                <tr>
+                    <td><strong>Sale ID:</strong></td>
+                    <td>#{{ sale.id }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Date:</strong></td>
+                    <td>{{ sale.sale_date.strftime('%B %d, %Y %I:%M %p') }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Total Items:</strong></td>
+                    <td>{{ sale.total_items }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Total Amount:</strong></td>
+                    <td><strong style="color: var(--primary-color); font-size: 1.2rem;">₱{{ "%.2f"|format(sale.total_amount) }}</strong></td>
+                </tr>
+            </table>
+
+            <div style="border-top: 2px solid #ddd; padding-top: 1rem; margin-top: 1rem;">
+                <h3>Items Purchased</h3>
+                <ul style="list-style: none;">
+                    {% for item in sale.items %}
+                    <li style="padding: 0.5rem; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between;">
+                        <span>{{ item.product.name }} x{{ item.quantity }}</span>
+                        <span>₱{{ "%.2f"|format(item.quantity * item.price) }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                <a href="{{ url_for('home') }}" class="btn btn-primary" style="flex: 1; text-align: center;">New Sale</a>
+                <a href="{{ url_for('sales_history') }}" class="btn btn-secondary" style="flex: 1; text-align: center;">Sale History</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

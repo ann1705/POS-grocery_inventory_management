@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Sales History{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>🧾 Sales History</h1>
+    <p>Your past sales (most recent first)</p>
+</div>
+
+<div style="margin-bottom: 1rem; display:flex; gap:0.5rem;">
+    <button type="button" onclick="history.back()" class="btn btn-secondary">← Back</button>
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">Sales Home</a>
+</div>
+
+{% if not sales %}
+    <div class="card">
+        <div class="card-body">No sales found.</div>
+    </div>
+{% else %}
+    <div class="card">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Sale ID</th>
+                    <th>Date</th>
+                    <th>Items</th>
+                    <th>Amount</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in sales|sort(attribute='sale_date', reverse=true) %}
+                <tr>
+                    <td>#{{ s.id }}</td>
+                    <td>{{ s.sale_date.strftime('%B %d, %Y %I:%M %p') }}</td>
+                    <td>{{ s.total_items }}</td>
+                    <td>₱{{ "%.2f"|format(s.total_amount) }}</td>
+                    <td><a href="{{ url_for('receipt', sale_id=s.id) }}" class="btn btn-sm btn-primary">View Receipt</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+
+{% endblock %}

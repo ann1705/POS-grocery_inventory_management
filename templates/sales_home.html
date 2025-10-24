@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Sales - Select Category{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>🛍️ Point of Sale</h1>
+    <p>Select a category to start shopping</p>
+</div>
+
+<div id="categoryContainer">
+    <div class="category-list">
+        {% for category in categories %}
+    <div class="category-card" onclick='loadProducts({{ category.id }}, {{ category.name|tojson }})'>
+            <h3>{{ category.name }}</h3>
+            <p style="font-size: 0.9rem; opacity: 0.9;">{{ category.products|length }} products</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="productsContainer" style="display: none;">
+    <div style="margin-bottom: 1rem;">
+        <button onclick="goBackToCategories()" class="btn btn-secondary">← Back to Categories</button>
+    </div>
+    <h2 id="categoryTitle"></h2>
+    <div class="product-grid" id="productsList"></div>
+</div>
+
+<script>
+function loadProducts(categoryId, categoryName) {
+    document.getElementById('categoryContainer').style.display = 'none';
+    document.getElementById('productsContainer').style.display = 'block';
+    document.getElementById('categoryTitle').innerText = categoryName;
+
+    fetch(`/api/products/${categoryId}`)
+        .then(response => response.json())
+        .then(products => {
+            let html = '';
+            products.forEach(product => {
+                html += `
+                    <div class="product-card">
+                        <div class="product-image">
+                            ${product.image_url ? `<img src="${product.image_url}" alt="${product.name}">` : '🛒'}
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">${product.name}</div>
+                            <div class="product-price">₱${product.price.toFixed(2)}</div>
+                            <div class="product-stock">Stock: ${product.stock}</div>
+                            <div class="product-actions">
+                                <input type="number" id="qty-${product.id}" min="1" max="${product.stock}" value="1">
+                                <button class="btn btn-primary btn-sm" onclick="addToCart(${product.id}, '${product.name}', ${product.price})">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('productsList').innerHTML = html;
+        });
+}
+
+function goBackToCategories() {
+    document.getElementById('categoryContainer').style.display = 'block';
+    document.getElementById('productsContainer').style.display = 'none';
+}
+
+function addToCart(productId, productName, price) {
+    const quantity = parseInt(document.getElementById(`qty-${productId}`).value);
+    if (quantity < 1) return;
+
+    fetch('/api/add-to-cart', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({product_id: productId, quantity: quantity})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`${productName} added to cart!`);
+            document.getElementById(`qty-${productId}`).value = 1;
+        } else {
+            alert(data.message);
+        }
+    });
+}
+
+window.onload = function() {
+    goBackToCategories();
+};
+</script>
+
+<div style="position: fixed; bottom: 20px; right: 20px;">
+    <div style="display:flex; flex-direction: column; gap: 0.5rem; align-items: flex-end;">
+        <a href="{{ url_for('sales_history') }}" class="btn btn-secondary" style="padding: 0.8rem; font-size: 0.95rem;">📜 Sales History</a>
+        <a href="{{ url_for('checkout') }}" class="btn btn-primary" style="padding: 1rem; font-size: 1.1rem;">🛒 Go to Checkout</a>
+    </div>
+</div>
+{% endblock %}

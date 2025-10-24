@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventory Records{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>📦 Inventory Records</h1>
+    <p>Track sales by month and category</p>
+</div>
+
+<div style="margin-bottom: 1rem; display:flex; gap:0.5rem;">
+    <button type="button" onclick="history.back()" class="btn btn-secondary">← Back</button>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">Dashboard</a>
+</div>
+
+<form method="GET" style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 200px;">
+        <label>Filter by Month</label>
+        <select name="month" onchange="this.form.submit()">
+            <option value="">All Months</option>
+            {% for m in months %}
+            <option value="{{ m }}" {% if month_filter == m %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div style="flex: 1; min-width: 200px;">
+        <label>Filter by Year</label>
+        <select name="year" onchange="this.form.submit()">
+            <option value="">All Years</option>
+            {% for y in years %}
+            <option value="{{ y }}" {% if year_filter|string == y|string %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div style="flex: 1; min-width: 200px;">
+        <label>Filter by Category</label>
+        <select name="category" onchange="this.form.submit()">
+            <option value="">All Categories</option>
+            {% for category in categories %}
+            <option value="{{ category.id }}" {% if category_filter|int == category.id %}selected{% endif %}>{{ category.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <div style="flex: 1; min-width: 200px;">
+        <label>Filter by Date</label>
+        <input type="date" name="date" value="{{ date_filter or '' }}" onchange="this.form.submit()" />
+    </div>
+</form>
+
+{# If both category and month are selected, show 'No inventory exists' when total sold is 0 #}
+{% if category_filter and month_filter %}
+    {% set total_sold = 0 %}
+    {% for record in inventory %}
+        {% set total_sold = total_sold + (record.quantity_sold or 0) %}
+    {% endfor %}
+    {% if total_sold == 0 %}
+        <div class="card">
+            <div class="card-body">No inventory exists in {{ month_filter }}{% if year_filter %} {{ year_filter }}{% endif %} for the selected category.</div>
+        </div>
+    {% else %}
+        <div class="card">
+            <table class="table">
+                <thead>
+                    <tr>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th>Sold</th>
+                            <th>Remaining</th>
+                            <th>Month</th>
+                            <th>Date</th>
+                            <th>Year</th>
+                        </tr>
+                </thead>
+                <tbody>
+                    {% for record in inventory %}
+                    <tr>
+                        <td>{{ record.product.name }}</td>
+                        <td>{{ record.product.category.name }}</td>
+                        <td>{{ record.quantity_sold or 0 }}</td>
+                        <td>{{ record.quantity_remaining or 0 }}</td>
+                            <td>{{ record.month }}</td>
+                            <td>{% if date_filter %}{{ date_filter }}{% else %}{% if record.record_date %}{{ record.record_date.strftime('%Y-%m-%d') }}{% endif %}{% endif %}</td>
+                            <td>{{ record.year }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% else %}
+    {% if not inventory %}
+        <div class="card">
+            <div class="card-body">
+                {% if month_filter %}
+                    No inventory exists in {{ month_filter }}{% if year_filter %} {{ year_filter }}{% endif %}.
+                {% else %}
+                    No inventory records found.
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="card">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Sold</th>
+                        <th>Remaining</th>
+                        <th>Month</th>
+                        <th>Year</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in inventory %}
+                    <tr>
+                        <td>{{ record.product.name }}</td>
+                        <td>{{ record.product.category.name }}</td>
+                        <td>{{ record.quantity_sold or 0 }}</td>
+                        <td>{{ record.quantity_remaining or 0 }}</td>
+                        <td>{{ record.month }}</td>
+                        <td>{{ record.year }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endif %}
+{% endblock %}

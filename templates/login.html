@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Grocery POS{% endblock %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 5rem auto;">
+    <div class="card">
+        <div class="card-header" style="text-align: center; font-size: 1.5rem;">
+            🔐 Login
+        </div>
+        <div class="card-body">
+            {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+            {% endif %}
+
+            <form method="POST">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">login</button>
+            </form>
+
+            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #ddd;">
+                <p><strong>Demo Credentials:</strong></p>
+                <p>Superadmin: superadmin / superadmin123</p>
+                <p style="color: var(--text-light); font-size: 0.875rem;">
+                    (Other accounts created by superadmin)
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
