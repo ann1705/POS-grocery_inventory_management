@@ -24,11 +24,16 @@
 
                 <div class="form-group">
                     <label>Role</label>
-                    <select name="role" required>
-                        <option value="">Select Role</option>
-                        <option value="admin">Admin (Inventory Management)</option>
-                        <option value="sales">Sales (POS Operations)</option>
-                    </select>
+                    {% if role_suggest %}
+                        <input type="hidden" name="role" value="{{ role_suggest }}">
+                        <div style="padding:0.5rem 0; color:var(--muted);">Role: <strong>{{ role_suggest }}</strong> (preselected)</div>
+                    {% else %}
+                        <select name="role" required>
+                            <option value="">Select Role</option>
+                            <option value="admin">Admin (Inventory Management)</option>
+                            <option value="sales">Sales (POS Operations)</option>
+                        </select>
+                    {% endif %}
                 </div>
 
                 <div style="display: flex; gap: 1rem;">

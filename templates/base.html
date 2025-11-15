@@ -15,16 +15,24 @@
             {% if session.role == 'sales' %}
                 <a href="{{ url_for('sales_history') }}" style="margin-left: 1rem;">Sales History</a>
             {% endif %}
+            {# Dashboard quick link for admins/superadmin/sales #}
+            {% if session.role == 'superadmin' %}
+                <a href="{{ url_for('superadmin_dashboard') }}" style="margin-left: 1rem;" class="btn btn-link">Dashboard</a>
+            {% elif session.role == 'admin' %}
+                <a href="{{ url_for('admin_dashboard') }}" style="margin-left: 1rem;" class="btn btn-link">Dashboard</a>
+            {% else %}
+                <a href="{{ url_for('pos') }}" style="margin-left: 1rem;" class="btn btn-link">Dashboard</a>
+            {% endif %}
             <a href="{{ url_for('logout') }}" style="margin-left: 1rem;">Logout</a>
         </div>
         {% endif %}
     </nav>
 
     <div class="container">
-        {% with messages = get_flashed_messages() %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                {% for message in messages %}
-                <div class="alert alert-info">{{ message }}</div>
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
                 {% endfor %}
             {% endif %}
         {% endwith %}

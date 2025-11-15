@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block title %}Point of Sale{% endblock %}
+
+{% block content %}
+<div style="display:flex; gap:1rem;">
+    <div style="flex:1; max-width:360px;">
+        <div class="card">
+            <div class="card-header">Categories</div>
+            <div class="card-body" id="categories">
+                {% for c in categories %}
+                <div class="category-item" style="padding:0.25rem 0;">
+                    <button class="btn btn-link" onclick="fetchProducts({{ c.id }})">{{ c.name }}</button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div style="margin-top:1rem;" class="card">
+            <div class="card-header">Products</div>
+            <div class="card-body" id="products">
+                <p style="color:var(--text-light);">Select a category to view products.</p>
+            </div>
+        </div>
+    </div>
+
+    <div style="flex:1;">
+        <div class="card">
+            <div class="card-header">Cart</div>
+            <div class="card-body" id="cart">
+                {% if cart %}
+                <table class="table">
+                    <thead>
+                        <tr><th>Product</th><th>Qty</th><th>Price</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="cartTableBody">
+                        <!-- Cart items will be populated via JavaScript after fetching product details -->
+                    </tbody>
+                </table>
+                <div style="text-align:right; margin-top:1rem; display:flex; gap:0.5rem; justify-content:flex-end;">
+                    <a href="{{ url_for('sales_history') }}" class="btn btn-secondary">Sales History</a>
+                    <a href="{{ url_for('checkout') }}" class="btn btn-success">Checkout</a>
+                </div>
+                {% else %}
+                <p style="color:var(--text-light);">Cart is empty.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin auth modal (used when a sales user tries to edit/remove) -->
+<div id="adminAuthModal" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4);">
+    <div style="background:white; width:320px; margin:6% auto; padding:1rem; border-radius:6px;">
+        <h3>Manager Authentication</h3>
+        <p>Enter Admin or Superadmin credentials to authorize this action.</p>
+        <div class="form-group">
+            <label>Admin / Superadmin Username</label>
+            <input id="authUsername" type="text">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input id="authPassword" type="password">
+        </div>
+        <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:0.5rem;">
+            <button class="btn btn-secondary" onclick="closeAuthModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="submitAuth()">Authorize</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const role = '{{ session.get("role") }}';
+const cartData = JSON.parse('{{ cart | tojson }}');
+
+// On page load, populate cart from minimal session data by fetching product details
+window.addEventListener('DOMContentLoaded', () => {
+    if(cartData && cartData.length > 0) {
+        renderCartFromData(cartData);
+    }
+});
+
+async function renderCartFromData(cartItems) {
+    if(!cartItems.length) return;
+    const tbody = document.getElementById('cartTableBody');
+    if(!tbody) return;
+    
+    let html = '';
+    for(const item of cartItems) {
+        // Fetch product details for this item by product ID
+        try {
+            const res = await fetch(`/api/product/${item.product_id}`);
+            if(!res.ok) continue;
+            const product = await res.json();
+            
+            html += `<tr>
+                <td>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        ${product.image_url ? `<img src="${product.image_url}" alt="${product.name}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;">` : `<div style=\"width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:#f0f0f0;color:#777;border-radius:6px;\">No image</div>`}
+                        <span>${product.name}</span>
+                    </div>
+                </td>
+                <td style="display:flex; gap:0.5rem; align-items:center;">
+                    <input type="number" id="qty-${item.product_id}" min="1" value="${item.quantity}" style="width:72px;">
+                    <button class="btn btn-primary btn-sm" onclick="onSaveQuantity(${item.product_id})">Save</button>
+                </td>
+                <td>₱${product.price.toFixed(2)}</td>
+                <td>
+                    <button class="btn btn-danger btn-sm" onclick="onRemoveItem(${item.product_id})">Remove</button>
+                </td>
+            </tr>`;
+        } catch(e) {
+            console.error(`Failed to fetch product ${item.product_id}:`, e);
+        }
+    }
+    tbody.innerHTML = html;
+}
+
+function fetchProducts(catId){
+    fetch(`/api/products/${catId}`)
+    .then(r => r.json())
+    .then(data => renderProducts(data))
+    .catch(e => console.error(e));
+}
+
+function renderProducts(products){
+    const el = document.getElementById('products');
+    if(!products || products.length===0){
+        el.innerHTML = '<p style="color:var(--text-light);">No products in this category.</p>';
+        return;
+    }
+    let html = '<div style="display:flex; flex-direction:column; gap:0.5rem;">';
+    for(const p of products){
+        html += `<div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+                ${p.image_url ? `<img src="${p.image_url}" alt="${p.name}" style="width:56px;height:56px;object-fit:cover;border-radius:6px;">` : `<div style=\"width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:#f0f0f0;color:#777;border-radius:6px;\">No image</div>`}
+                <div>
+                    <strong>${p.name}</strong>
+                    <div style="color:var(--text-muted);">₱${p.price.toFixed(2)} • Stock: ${p.stock}</div>
+                </div>
+            </div>
+            <div style="display:flex; gap:0.5rem; align-items:center;">
+                <input type="number" id="qty-${p.id}" value="1" min="1" style="width:70px;">
+                <button class="btn btn-primary" onclick="addToCart(${p.id})">Add</button>
+            </div>
+        </div>`;
+    }
+    html += '</div>';
+    el.innerHTML = html;
+}
+
+function addToCart(prodId){
+    const qty = document.getElementById(`qty-${prodId}`).value || 1;
+    fetch('/api/add-to-cart',{
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({product_id: prodId, quantity: qty})
+    }).then(r=>r.json()).then(j=>{
+        if(j.success){
+            location.reload();
+        } else {
+            alert(j.message || 'Failed to add');
+        }
+    }).catch(e=>console.error(e));
+}
+
+// For sales role, prompt for admin auth before update/remove
+let pendingAction = null;
+
+function onChangeQuantity(prodId, newQty){
+    // keep for backward compatibility (not used when Save button present)
+    if(role === 'sales'){
+        pendingAction = {type:'update', prodId, quantity: newQty};
+        openAuthModal();
+        return;
+    }
+    doUpdateQuantity(prodId, newQty);
+}
+
+function onSaveQuantity(prodId){
+    const qtyEl = document.getElementById(`qty-${prodId}`);
+    if(!qtyEl) return;
+    const newQty = qtyEl.value;
+    if(role === 'sales'){
+        pendingAction = {type:'update', prodId, quantity: newQty};
+        openAuthModal();
+        return;
+    }
+    doUpdateQuantity(prodId, newQty);
+}
+
+function onRemoveItem(prodId){
+    if(role === 'sales'){
+        pendingAction = {type:'remove', prodId};
+        openAuthModal();
+        return;
+    }
+    doRemoveItem(prodId);
+}
+
+function doUpdateQuantity(prodId, quantity, auth){
+    const payload = {product_id: prodId, quantity: quantity};
+    if(auth){ payload.auth_username = auth.username; payload.auth_password = auth.password; }
+    fetch('/api/update-cart',{
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+    }).then(r=>r.json()).then(j=>{
+        if(j.success) location.reload(); else alert(j.message || 'Failed to update');
+    }).catch(e=>console.error(e));
+}
+
+function doRemoveItem(prodId, auth){
+    const opts = {method:'POST', headers:{'Content-Type':'application/json'}};
+    const body = auth ? JSON.stringify({auth_username: auth.username, auth_password: auth.password}) : JSON.stringify({});
+    fetch(`/api/remove-from-cart/${prodId}`, Object.assign(opts, {body})).then(r=>r.json()).then(j=>{
+        if(j.success) location.reload(); else alert(j.message || 'Failed to remove');
+    }).catch(e=>console.error(e));
+}
+
+function openAuthModal(){
+    document.getElementById('authUsername').value = '';
+    document.getElementById('authPassword').value = '';
+    document.getElementById('adminAuthModal').style.display = 'block';
+}
+function closeAuthModal(){
+    document.getElementById('adminAuthModal').style.display = 'none';
+    pendingAction = null;
+}
+
+function submitAuth(){
+    const username = document.getElementById('authUsername').value;
+    const password = document.getElementById('authPassword').value;
+    if(!pendingAction){ closeAuthModal(); return; }
+    const auth = {username, password};
+    if(pendingAction.type === 'update'){
+        doUpdateQuantity(pendingAction.prodId, pendingAction.quantity, auth);
+    } else if(pendingAction.type === 'remove'){
+        doRemoveItem(pendingAction.prodId, auth);
+    }
+    closeAuthModal();
+}
+</script>
+
+{% endblock %}

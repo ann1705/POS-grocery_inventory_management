@@ -13,35 +13,99 @@
     <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">Sales Home</a>
 </div>
 
-{% if not sales %}
-    <div class="card">
-        <div class="card-body">No sales found.</div>
-    </div>
+<div style="margin-bottom:1rem;">
+    <form method="get" action="{{ url_for('sales_history') }}" style="display:flex; gap:.5rem; align-items:center;">
+        <label for="ym" style="margin:0;">Monthly:</label>
+        <input type="month" id="ym" name="ym" value="{{ ym if ym is defined else '' }}" />
+        <button class="btn btn-primary" type="submit">View Month</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('sales_history') }}?date=all">All dates</a>
+    </form>
+</div>
+
+{% if month_display %}
+    <div style="margin-bottom:1rem; font-weight:700;">Sales for {{ month_display }}</div>
+{% endif %}
+
+{% if view_all %}
+    {% if not sales_by_date %}
+        <div class="card">
+            <div class="card-body">No sales found.</div>
+        </div>
+    {% else %}
+        {% for day_key, day_label, day_sales in sales_by_date %}
+        <div class="card" style="margin-bottom:1rem;">
+            <div class="card-header">{{ day_label }} — {{ day_sales|length }} sale{{ 's' if day_sales|length>1 else '' }}</div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Sale ID</th>
+                            <th>Cashier</th>
+                            <th>Items</th>
+                            <th>Amount</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in day_sales %}
+                        <tr>
+                            <td>{{ s.sale_date.strftime('%I:%M %p') }}</td>
+                            <td>#{{ s.id }}</td>
+                            <td>{{ s.cashier_username }}</td>
+                            <td>{{ s.total_items }}</td>
+                            <td>₱{{ "%.2f"|format(s.total_amount) }}</td>
+                            <td><a href="{{ url_for('receipt', sale_id=s.id) }}" class="btn btn-sm btn-primary">View Receipt</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
 {% else %}
-    <div class="card">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Sale ID</th>
-                    <th>Date</th>
-                    <th>Items</th>
-                    <th>Amount</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for s in sales|sort(attribute='sale_date', reverse=true) %}
-                <tr>
-                    <td>#{{ s.id }}</td>
-                    <td>{{ s.sale_date.strftime('%B %d, %Y %I:%M %p') }}</td>
-                    <td>{{ s.total_items }}</td>
-                    <td>₱{{ "%.2f"|format(s.total_amount) }}</td>
-                    <td><a href="{{ url_for('receipt', sale_id=s.id) }}" class="btn btn-sm btn-primary">View Receipt</a></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div style="display:flex; gap:0.5rem; align-items:center; margin-bottom:1rem;">
+        <a class="btn btn-outline-primary" href="{{ url_for('sales_history') }}?date={{ prev_date }}">← {{ prev_date }}</a>
+        <div style="font-weight:600; margin:0 0.5rem;">{{ date | default('') }}</div>
+        <a class="btn btn-outline-primary" href="{{ url_for('sales_history') }}?date={{ next_date }}">{{ next_date }} →</a>
+        <a class="btn btn-secondary" href="{{ url_for('sales_history') }}?date=all">All dates</a>
+        <a class="btn btn-link" href="{{ url_for('sales_history') }}?date={{ today }}">Today</a>
     </div>
+
+    {% if not sales %}
+        <div class="card"><div class="card-body">No sales found for {{ date }}.</div></div>
+    {% else %}
+        <div class="card">
+            <div class="card-header">Sales for {{ date }}</div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Sale ID</th>
+                            <th>Cashier</th>
+                            <th>Items</th>
+                            <th>Amount</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in sales %}
+                        <tr>
+                            <td>{{ s.sale_date.strftime('%I:%M %p') }}</td>
+                            <td>#{{ s.id }}</td>
+                            <td>{{ s.cashier_username }}</td>
+                            <td>{{ s.total_items }}</td>
+                            <td>₱{{ "%.2f"|format(s.total_amount) }}</td>
+                            <td><a href="{{ url_for('receipt', sale_id=s.id) }}" class="btn btn-sm btn-primary">View Receipt</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
 {% endif %}
 
 {% endblock %}

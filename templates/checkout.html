@@ -29,10 +29,8 @@
                     <td>₱{{ "%.2f"|format(item.price) }}</td>
                     <td>₱{{ "%.2f"|format(item.quantity * item.price) }}</td>
                     <td>
-                        <form method="POST" action="{{ url_for('remove_from_cart', product_id=item.id) }}" style="display: inline;">
-                            <button type="submit" class="btn btn-danger btn-sm">Remove</button>
-                        </form>
-                    </td>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="onRemoveCheckout({{ item.id }})">Remove</button>
+                        </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -59,14 +57,14 @@
         </div>
 
         <button onclick="processSale()" class="btn btn-primary btn-block" style="margin-top: 1rem; padding: 1rem;">Complete Sale</button>
-        <a href="{{ url_for('home') }}" class="btn btn-secondary btn-block" style="margin-top: 0.5rem; padding: 1rem;">Continue Shopping</a>
+    <a href="{{ url_for('pos') }}" class="btn btn-secondary btn-block" style="margin-top: 0.5rem; padding: 1rem;">Continue Shopping</a>
     </div>
 </div>
 {% else %}
 <div class="card">
     <div class="card-body" style="text-align: center; padding: 3rem;">
         <p style="font-size: 1.5rem; color: var(--text-light);">🛒 Your cart is empty</p>
-        <a href="{{ url_for('home') }}" class="btn btn-primary" style="margin-top: 1rem;">Start Shopping</a>
+    <a href="{{ url_for('pos') }}" class="btn btn-primary" style="margin-top: 1rem;">Start Shopping</a>
     </div>
 </div>
 {% endif %}
@@ -84,6 +82,63 @@ function processSale() {
                 }
             });
     }
+}
+</script>
+<!-- Admin auth modal for checkout remove actions -->
+<div id="adminAuthModalCheckout" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4);">
+    <div style="background:white; width:320px; margin:6% auto; padding:1rem; border-radius:6px;">
+        <h3>Manager Authentication</h3>
+        <p>Enter Admin or Superadmin credentials to authorize this action.</p>
+        <div class="form-group">
+            <label>Admin / Superadmin Username</label>
+            <input id="authUsernameCheckout" type="text">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input id="authPasswordCheckout" type="password">
+        </div>
+        <div style="display:flex; gap:0.5rem; justify-content:flex-end; margin-top:0.5rem;">
+            <button class="btn btn-secondary" onclick="closeAuthModalCheckout()">Cancel</button>
+            <button class="btn btn-primary" onclick="submitAuthCheckout()">Authorize</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const role = '{{ session.get("role") }}';
+let pendingRemove = null;
+function onRemoveCheckout(prodId){
+    if(role === 'sales'){
+        pendingRemove = prodId;
+        document.getElementById('authUsernameCheckout').value = '';
+        document.getElementById('authPasswordCheckout').value = '';
+        document.getElementById('adminAuthModalCheckout').style.display = 'block';
+        return;
+    }
+    doRemoveCheckout(prodId);
+}
+function closeAuthModalCheckout(){
+    document.getElementById('adminAuthModalCheckout').style.display = 'none';
+    pendingRemove = null;
+}
+function submitAuthCheckout(){
+    const u = document.getElementById('authUsernameCheckout').value;
+    const p = document.getElementById('authPasswordCheckout').value;
+    if(!pendingRemove){ closeAuthModalCheckout(); return; }
+    doRemoveCheckout(pendingRemove, {auth_username: u, auth_password: p});
+    closeAuthModalCheckout();
+}
+function doRemoveCheckout(prodId, auth){
+    const payload = auth ? auth : {};
+    fetch(`/api/remove-from-cart/${prodId}`, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)})
+    .then(r => r.json()).then(j => {
+        if(j.success){
+            // reload checkout page to reflect changes
+            window.location.reload();
+        } else {
+            alert(j.message || 'Failed to remove item');
+        }
+    }).catch(e=>{ console.error(e); alert('Remove failed'); });
 }
 </script>
 {% endblock %}

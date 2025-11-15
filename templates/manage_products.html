@@ -57,6 +57,7 @@
         <table class="table" style="font-size: 0.9rem;">
             <thead>
                 <tr>
+                    <th>Image</th>
                     <th>Name</th>
                     <th>Category</th>
                     <th>Price</th>
@@ -67,6 +68,13 @@
             <tbody>
                 {% for product in products %}
                 <tr>
+                    <td style="width:72px;">
+                        {% if product.image_url %}
+                        <img src="{{ product.image_url }}" alt="{{ product.name }}" style="width:64px;height:64px;object-fit:cover;border-radius:4px;">
+                        {% else %}
+                        <div style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;background:#f0f0f0;color:#777;border-radius:4px;">No image</div>
+                        {% endif %}
+                    </td>
                     <td>{{ product.name }}</td>
                     <td>{{ product.category.name }}</td>
                     <td>₱{{ "%.2f"|format(product.price) }}</td>

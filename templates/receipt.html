@@ -22,6 +22,10 @@
                     <td>#{{ sale.id }}</td>
                 </tr>
                 <tr>
+                    <td><strong>Cashier:</strong></td>
+                    <td>{{ sale.cashier_username or sale.user.username }}</td>
+                </tr>
+                <tr>
                     <td><strong>Date:</strong></td>
                     <td>{{ sale.sale_date.strftime('%B %d, %Y %I:%M %p') }}</td>
                 </tr>

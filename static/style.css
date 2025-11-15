@@ -7,6 +7,58 @@
 }
 
 :root {
+    --bg:#f6f7fb; --card:#ffffff; --muted:#6b7280; --primary:#2563eb; --accent:#10b981; --danger:#dc2626; --border:#e6e9ef; --text:#111827;
+}
+
+body {
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    background:var(--bg); color:var(--text); margin:0; -webkit-font-smoothing:antialiased;
+}
+
+.navbar {
+    display:flex; justify-content:space-between; align-items:center; padding:0.75rem 1rem; background:var(--card); border-bottom:1px solid var(--border);
+}
+
+.logo{ font-weight:700 }
+.user-info a{ color:var(--primary); text-decoration:none }
+.container{ max-width:1100px; margin:1.25rem auto; padding:0 1rem }
+
+.card{ background:var(--card); border:1px solid var(--border); border-radius:8px; padding:0.75rem }
+.card-header{ font-weight:700; padding-bottom:0.5rem; border-bottom:1px solid #f7fafc; margin-bottom:0.5rem }
+.btn{ display:inline-block; padding:0.45rem 0.75rem; border-radius:6px; text-decoration:none; color:#fff; background:var(--primary); border:none; cursor:pointer }
+
+.btn-secondary{ background:#6b7280 }
+.btn-danger{ background:var(--danger) }
+.btn-success{ background:var(--accent) }
+
+.btn-link{ background:transparent; color:var(--primary); padding:0; border:none; cursor:pointer }
+.table{ width:100%; border-collapse:collapse }
+.table th, .table td{ padding:0.55rem; border-bottom:1px solid #f3f4f6; text-align:left }
+
+.form-group{ margin-bottom:0.6rem }
+input[type="text"], input[type="password"], select, input[type="number"]{ width:100%; padding:0.5rem; border:1px solid var(--border); border-radius:6px }
+.alert{ padding:0.5rem 0.75rem; border-radius:6px }
+
+.alert-danger{ background:#fff1f2; color:#981b1b }
+.alert-success{ background:#ecfdf5; color:#065f46 }
+.stats-grid{ display:flex; gap:1rem; margin-bottom:1rem }
+
+.stat-card{ background:var(--card); padding:1rem; border-radius:8px; border:1px solid #eff6ff }
+.category-item button{ width:100%; text-align:left; background:transparent; border:none; padding:0.4rem 0; cursor:pointer }
+.modal{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center }
+
+.modal > div{ width:320px; }
+@media (max-width:800px){ .container{ padding:0.5rem } .dashboard-header h1{font-size:1.1rem} }
+
+/* ==================== GENERAL STYLES ==================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
     --primary-color: #2D3250;
     --secondary-color: #424769;
     --accent-color: #676F9D;
