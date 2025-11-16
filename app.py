@@ -289,13 +289,6 @@ def edit_category(cat_id):
 @app.route('/admin/categories/<int:cat_id>/delete', methods=['POST'])
 @role_required('admin')
 def delete_category(cat_id):
-    password = request.form.get('admin_password')
-    user = User.query.get(session['user_id'])
-    
-    if not verify_password(user.password, password):
-        flash('Invalid password. Category not deleted.', 'danger')
-        return redirect(url_for('manage_categories'))
-    
     category = Category.query.get_or_404(cat_id)
     db.session.delete(category)
     db.session.commit()
@@ -327,13 +320,6 @@ def manage_products():
 def edit_product(prod_id):
     product = Product.query.get_or_404(prod_id)
     if request.method == 'POST':
-        password = request.form.get('admin_password')
-        user = User.query.get(session['user_id'])
-        
-        if not verify_password(user.password, password):
-            categories = Category.query.all()
-            return render_template('edit_product.html', product=product, categories=categories, error='Invalid password')
-        
         product.name = request.form.get('name')
         product.category_id = request.form.get('category_id')
         product.price = request.form.get('price')
@@ -349,13 +335,6 @@ def edit_product(prod_id):
 @app.route('/admin/products/<int:prod_id>/delete', methods=['POST'])
 @role_required('admin')
 def delete_product(prod_id):
-    password = request.form.get('admin_password')
-    user = User.query.get(session['user_id'])
-    
-    if not verify_password(user.password, password):
-        flash('Invalid password. Product not deleted.', 'danger')
-        return redirect(url_for('manage_products'))
-    
     product = Product.query.get_or_404(prod_id)
     db.session.delete(product)
     db.session.commit()
